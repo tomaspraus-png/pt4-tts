@@ -1,4 +1,4 @@
-
+export const runtime = "nodejs";
 export default async function handler(req, res) {
   // ✅ CORS (důležité)
   res.setHeader("Access-Control-Allow-Origin", "*");
