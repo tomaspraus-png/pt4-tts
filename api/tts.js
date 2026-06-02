@@ -26,15 +26,43 @@ export default async function handler(req, res) {
   });
 
   try {
-    const response = await fetch(`${ENDPOINT}/cognitiveservices/v1`, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": AZURE_KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3"
-      },
-      body: body
-    });
+    
+const response = await fetch(`${ENDPOINT}/cognitiveservices/v1`, {
+  method: "POST",
+  headers: {
+    "Ocp-Apim-Subscription-Key": AZURE_KEY,
+    "Content-Type": "application/ssml+xml",
+    "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3"
+  },
+  body: body
+});
+
+// 🔥 KRITICKÉ LOGY
+console.log("Azure response status:", response.status);
+
+const text = await response.text();
+console.log("Azure raw response:", text);
+
+// ✅ pokud není OK → pošli zpět klientovi
+if (response.status !== 200) {
+  return res.status(500).send(text);
+}
+
+// ✅ pokud OK → musíš znovu zavolat (blob už nejde použít po text())
+const response2 = await fetch(`${ENDPOINT}/cognitiveservices/v1`, {
+  method: "POST",
+  headers: {
+    "Ocp-Apim-Subscription-Key": AZURE_KEY,
+    "Content-Type": "application/ssml+xml",
+    "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3"
+  },
+  body: body
+});
+
+const buffer = await response2.arrayBuffer();
+
+res.setHeader("Content-Type", "audio/mpeg");
+res.status(200).send(Buffer.from(buffer));
 
    
 if (!response.ok) {
