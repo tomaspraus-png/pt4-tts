@@ -6,10 +6,19 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  // ✅ CORS HEADERS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+
+  // ✅ preflight (VELMI důležité)
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   const AZURE_KEY = "TVUJ_KEY";
   const ENDPOINT = "https://TVUJ-SPEECH-RESOURCE.cognitiveservices.azure.com";
 
-  // ✅ načtení body správně
   const body = await new Promise((resolve) => {
     let data = "";
     req.on("data", chunk => data += chunk);
@@ -27,7 +36,6 @@ export default async function handler(req, res) {
       body: body
     });
 
-    // ✅ debug
     if (!response.ok) {
       const txt = await response.text();
       console.error("AZURE ERROR:", response.status, txt);
