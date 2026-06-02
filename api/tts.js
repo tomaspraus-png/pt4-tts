@@ -36,10 +36,12 @@ export default async function handler(req, res) {
       body: body
     });
 
-    if (!response.ok) {
-      const txt = await response.text();
-      console.error("AZURE ERROR:", response.status, txt);
-      return res.status(500).send(txt);
+   
+if (!response.ok) {
+  const txt = await response.text();
+  console.error("AZURE ERROR DETAIL:", txt);
+  return res
+
     }
 
     const buffer = await response.arrayBuffer();
@@ -49,6 +51,11 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error("SERVER ERROR:", e);
-    res.status(500).send("TTS error");
+   
+const txt = await response.text();
+console.error("AZURE ERROR DETAIL:", txt);
+return res.status(500).send(txt);
+``
+
   }
 }
