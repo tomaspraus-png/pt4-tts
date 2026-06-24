@@ -1,16 +1,37 @@
 
 export default async function handler(req, res) {
+  // ===============================
+  // CORS
+  // ===============================
+  const allowedOrigins = [
+    "http://maplepoolclub.cz",
+    "https://maplepoolclub.cz"
+  ];
+
+  const origin = req.headers.origin;
+  const allowOrigin = allowedOrigins.includes(origin)
+    ? origin
+    : "http://maplepoolclub.cz";
+
+  res.setHeader("Access-Control-Allow-Origin", allowOrigin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // preflight požadavek z browseru
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const { text, lang = "cs-CZ" } = req.body || {};
 
     if (!text) {
-      res.status(400).json({ error: "Missing text" });
-      return;
+      return res.status(400).json({ error: "Missing text" });
     }
 
     const speechKey = process.env.AZURE_SPEECH_KEY;
@@ -19,8 +40,7 @@ export default async function handler(req, res) {
       process.env.AZURE_VOICE_NAME || "it-IT-MarcelloMultilingualNeural";
 
     if (!speechKey) {
-      res.status(500).json({ error: "Missing AZURE_SPEECH_KEY" });
-      return;
+      return res.status(500).json({ error: "Missing AZURE_SPEECH_KEY" });
     }
 
     const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
@@ -45,21 +65,21 @@ export default async function handler(req, res) {
 
     if (!azureRes.ok) {
       const errText = await azureRes.text().catch(() => "");
-      res.status(azureRes.status).json({
+      return res.status(azureRes.status).json({
         error: "Azure TTS failed",
         status: azureRes.status,
         detail: errText
       });
-      return;
     }
 
     const audioBuffer = Buffer.from(await azureRes.arrayBuffer());
 
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).send(audioBuffer);
+
+    return res.status(200).send(audioBuffer);
   } catch (e) {
-    res.status(500).json({
+    return res.status(500).json({
       error: "TTS proxy error",
       detail: String(e?.message || e)
     });
