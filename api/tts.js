@@ -36,8 +36,7 @@ export default async function handler(req, res) {
 
     const speechKey = process.env.AZURE_SPEECH_KEY;
     const region = process.env.AZURE_SPEECH_REGION || "swedencentral";
-    const voiceName =
-      process.env.AZURE_VOICE_NAME || "it-IT-MarcelloMultilingualNeural";
+    const voiceName = voiceForLang(lang);
 
     if (!speechKey) {
       return res.status(500).json({ error: "Missing AZURE_SPEECH_KEY" });
@@ -84,6 +83,22 @@ export default async function handler(req, res) {
       detail: String(e?.message || e)
     });
   }
+}
+
+function voiceForLang(lang) {
+  if (lang === "cs-CZ") {
+    return process.env.AZURE_VOICE_CS || "cs-CZ-AntoninNeural";
+  }
+
+  if (lang === "pl-PL") {
+    return process.env.AZURE_VOICE_PL || "pl-PL-MarekNeural";
+  }
+
+  if (lang === "en-US" || lang === "en-GB") {
+    return process.env.AZURE_VOICE_EN || "en-GB-OllieMultilingualNeural";
+  }
+
+  return process.env.AZURE_VOICE_EN || "en-GB-OllieMultilingualNeural";
 }
 
 function escapeXml(v) {
